@@ -1,9 +1,11 @@
 use libc::ioctl;
 use memmap::{MmapOptions, MmapMut};
+use std::default::Default;
 use std::error::Error;
 use std::fmt;
 use std::fs::{File, OpenOptions};
 use std::io;
+use std::mem;
 use std::path::{Path};
 use std::os::unix::io::AsRawFd;
 
@@ -74,21 +76,21 @@ pub struct FixScreenInfo {
     pub reserved: [u16; 2],
 }
 
-impl ::std::default::Default for Bitfield {
+impl Default for Bitfield {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { mem::zeroed() }
     }
 }
 
-impl ::std::default::Default for VarScreenInfo {
+impl Default for VarScreenInfo {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { mem::zeroed() }
     }
 }
 
-impl ::std::default::Default for FixScreenInfo {
+impl Default for FixScreenInfo {
     fn default() -> Self {
-        unsafe { ::std::mem::zeroed() }
+        unsafe { mem::zeroed() }
     }
 }
 
@@ -141,7 +143,7 @@ impl std::convert::From<io::Error> for FramebufferError {
 fn get_var_screen_info(device: &File) -> Result<VarScreenInfo, FramebufferError> {
     let mut info: VarScreenInfo = Default::default();
     let result = unsafe {
-        ioctl(device.as_raw_fd(), FBIOGET_VSCREENINFO as _, &mut info)
+        ioctl(device.as_raw_fd(), FBIOGET_VSCREENINFO, &mut info)
     };
 
     match result {
@@ -155,8 +157,9 @@ fn get_var_screen_info(device: &File) -> Result<VarScreenInfo, FramebufferError>
 
 fn get_fix_screen_info(device: &File) -> Result<FixScreenInfo, FramebufferError> {
     let mut info: FixScreenInfo = Default::default();
+
     let result = unsafe {
-        ioctl(device.as_raw_fd(), FBIOGET_FSCREENINFO as _, &mut info)
+        ioctl(device.as_raw_fd(), FBIOGET_FSCREENINFO, &mut info)
     };
 
     match result {
@@ -178,11 +181,13 @@ impl Framebuffer {
         let var_screen_info = get_var_screen_info(&device)?;
         let fix_screen_info = get_fix_screen_info(&device)?;
 
-        // TODO: read ioctl to get resolution
-        let frame_len = 128 * 64 * 2;
+        let xres = var_screen_info.xres;
+        let yres = var_screen_info.yres;
+        let byte_depth = var_screen_info.bits_per_pixel / 8;
+        let frame_len = xres * yres * byte_depth;
 
         let frame = unsafe {
-            MmapOptions::new().len(frame_len).map_mut(&device)
+            MmapOptions::new().len(frame_len as usize).map_mut(&device)
         };
 
         match frame {
