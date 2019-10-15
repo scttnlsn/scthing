@@ -45,29 +45,29 @@ fn ui_loop(rx: mpsc::Receiver<Message>, mut fb: Framebuffer) {
     let mut target = raqote::DrawTarget::new(xres, yres);
 
     let mut menu = Menu::new(vec![
-        MenuItem::new(
+        MenuItem::menu(
             "ITEM 1",
             vec![
-                MenuItem::new(
+                MenuItem::item(
                     "SUB ITEM 1-1",
-                    vec![],
+                    || { println!("1-1"); },
                 ),
-                MenuItem::new(
+                MenuItem::item(
                     "SUB ITEM 1-2",
-                    vec![],
+                    || { println!("1-2"); },
                 )
             ]
         ),
-        MenuItem::new(
+        MenuItem::menu(
             "ITEM 2",
             vec![
-                MenuItem::new(
+                MenuItem::item(
                     "SUB ITEM 2-1",
-                    vec![],
+                    || { println!("2-1"); },
                 ),
-                MenuItem::new(
+                MenuItem::item(
                     "SUB ITEM 2-2",
-                    vec![],
+                    || { println!("2-2"); },
                 )
             ]
         ),

@@ -12,15 +12,41 @@ const FOREGROUND_SOURCE: raqote::Source = raqote::Source::Solid(FOREGROUND);
 pub struct MenuItem {
     pub label: &'static str,
     pub children: Vec<MenuItem>,
-    back: bool
+    back: bool,
+    callback: Option<fn()>,
 }
 
 impl MenuItem {
-    pub fn new(label: &'static str, children: Vec<MenuItem>) -> Self {
+    pub fn menu(label: &'static str, children: Vec<MenuItem>) -> Self {
         MenuItem {
             label: label,
             children: children,
             back: false,
+            callback: None,
+        }
+    }
+
+    pub fn item(label: &'static str, callback: fn()) -> Self {
+        MenuItem {
+            label: label,
+            children: vec![],
+            back: false,
+            callback: Some(callback),
+        }
+    }
+
+    fn insert_back_button(self: &mut Self) {
+        if self.children.len() > 0 {
+            for child in &mut self.children {
+                child.insert_back_button();
+            }
+
+            self.children.push(MenuItem {
+                label: "<-",
+                children: vec![],
+                back: true,
+                callback: None,
+            })
         }
     }
 }
@@ -35,11 +61,7 @@ pub struct Menu {
 impl Menu {
     pub fn new(mut menu_items: Vec<MenuItem>) -> Self {
         for item in &mut menu_items {
-            item.children.push(MenuItem {
-                label: "<-",
-                children: vec![],
-                back: true,
-            })
+            item.insert_back_button()
         }
 
         Menu {
@@ -114,8 +136,10 @@ impl Menu {
             self.path.push(self.selected);
             self.selected = 0;
         } else {
-            // TODO: add callback to menu item, executed here
-            println!("selected: {}", item.label);
+            match item.callback {
+                Some(f) => { f() },
+                None => {}
+            }
         }
     }
 }
