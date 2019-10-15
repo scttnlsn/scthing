@@ -22,6 +22,8 @@ pub struct InputEvent {
     pub value: i32,
 }
 
+const INPUT_EVENT_SIZE: usize = mem::size_of::<InputEvent>();
+
 #[derive(Debug)]
 pub struct InputDevice {
     file: File
@@ -34,12 +36,10 @@ impl InputDevice {
     }
 
     pub fn read_event(self: &mut Self) -> Result<InputEvent, io::Error> {
-        // TODO: can I allocate this dynamically based on struct size?
-        // Is there a way to determine struct size at compile time?
-        let mut buf: [u8; 16] = [0; 16];
+        let mut buf: [u8; INPUT_EVENT_SIZE] = [0; INPUT_EVENT_SIZE];
 
         let bytes = self.file.read(&mut buf).unwrap();
-        if bytes != mem::size_of::<InputEvent>() {
+        if bytes != INPUT_EVENT_SIZE {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
                 "invalid number of bytes read from input device",

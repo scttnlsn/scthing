@@ -339,6 +339,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "noisemaker"
 version = "0.1.0"
 dependencies = [
+ "font-kit 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.62 (registry+https://github.com/rust-lang/crates.io-index)",
  "memmap 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "raqote 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
