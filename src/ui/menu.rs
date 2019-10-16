@@ -1,20 +1,11 @@
 use crate::ui;
-use font_kit::font::Font;
 use raqote;
-use std::sync::Arc;
 
-pub static FONT_BYTES: &'static [u8; 92600] = include_bytes!("fonts/inconsolata.ttf");
-
-const BACKGROUND: raqote::SolidSource = raqote::SolidSource { r: 0x00, g: 0x00, b: 0x00, a: 0x00 };
-const FOREGROUND: raqote::SolidSource = raqote::SolidSource { r: 0xFF, g: 0xFF, b: 0xFF, a: 0xFF };
-const FOREGROUND_SOURCE: raqote::Source = raqote::Source::Solid(FOREGROUND);
-
-#[derive(Debug)]
 pub struct MenuItem {
-    pub label: &'static str,
-    pub children: Vec<MenuItem>,
+    label: &'static str,
+    children: Vec<MenuItem>,
     back: bool,
-    callback: Option<fn()>,
+    action: Option<ui::Action>,
 }
 
 impl MenuItem {
@@ -23,16 +14,16 @@ impl MenuItem {
             label: label,
             children: children,
             back: false,
-            callback: None,
+            action: None,
         }
     }
 
-    pub fn item(label: &'static str, callback: fn()) -> Self {
+    pub fn item(label: &'static str, action: ui::Action) -> Self {
         MenuItem {
             label: label,
             children: vec![],
             back: false,
-            callback: Some(callback),
+            action: Some(action),
         }
     }
 
@@ -46,13 +37,12 @@ impl MenuItem {
                 label: "<-",
                 children: vec![],
                 back: true,
-                callback: None,
+                action: None,
             })
         }
     }
 }
 
-#[derive(Debug)]
 pub struct Menu {
     path: Vec<usize>,
     selected: usize,
@@ -94,63 +84,48 @@ impl Menu {
         }
     }
 
-    pub fn select(&mut self) {
+    pub fn select(&mut self) -> Option<ui::Action> {
         let item = &self.active_items()[self.selected];
 
         if item.back {
             self.selected = self.path.pop().unwrap();
+            None
         } else if item.children.len() > 0 {
             self.path.push(self.selected);
             self.selected = 0;
+            None
         } else {
-            match item.callback {
-                Some(f) => { f() },
-                None => {}
-            }
+            item.action
         }
     }
 }
 
 impl ui::Screen for Menu {
     fn render(&self, target: &mut raqote::DrawTarget) {
-        target.clear(BACKGROUND);
-
-        let draw_options = raqote::DrawOptions::new();
-        let font = Font::from_bytes(Arc::new(FONT_BYTES.to_vec()), 0).unwrap();
-
-        let mut draw_text = |text: &str, mut start: raqote::Point| {
-            let mut ids = Vec::new();
-            let mut positions = Vec::new();
-            for c in text.chars() {
-                let id = font.glyph_for_char(c).unwrap();
-                ids.push(id);
-                positions.push(start);
-                start += font.advance(id).unwrap() / 70.0;
-            }
-
-            target.draw_glyphs(&font, 14.0, &ids, &positions, &FOREGROUND_SOURCE, &draw_options);
-        };
-
-        let offset = 2.0;
-        let line_height = 14.0;
-
-        for (i, item) in self.active_items().iter().enumerate() {
-            let point = raqote::Point::new(0.0, (line_height * (i + 1) as f32) + offset);
-            let txt = if self.selected == i {
+        let lines = self.active_items().iter().enumerate().map(|(i, item)| {
+            if self.selected == i {
                 format!("* {}", item.label)
             } else {
                 format!("  {}", item.label)
-            };
+            }
+        }).collect();
 
-            draw_text(&txt, point);
-        }
+        ui::render_lines(lines, target);
     }
 
-    fn handle(&mut self, input: ui::Input) {
+    fn handle(&mut self, input: ui::Input) -> Option<ui::Action> {
         match input {
-            ui::Input::Left => { self.up() },
-            ui::Input::Right => { self.down() },
-            ui::Input::Press => { self.select() },
+            ui::Input::Left => {
+                self.up();
+                None
+            },
+            ui::Input::Right => {
+                self.down();
+                None
+            },
+            ui::Input::Press => {
+                self.select()
+            },
         }
     }
 }

@@ -1,11 +1,11 @@
 mod framebuffer;
 mod input;
-mod menu;
 mod ui;
 
-use framebuffer::Framebuffer;
-use input::InputDevice;
-use menu::{Menu, MenuItem};
+use crate::framebuffer::Framebuffer;
+use crate::input::InputDevice;
+use crate::ui::menu::{Menu, MenuItem};
+use crate::ui::param::Param;
 use raqote;
 use std::sync::mpsc;
 use std::thread;
@@ -34,11 +34,18 @@ fn paint(target: &raqote::DrawTarget, fb: &mut Framebuffer) {
     }
 }
 
+enum ScreenId {
+    MainMenu,
+    TestParam,
+}
+
 fn ui_loop(rx: mpsc::Receiver<ui::Input>, mut fb: Framebuffer) {
     let mut target = raqote::DrawTarget::new(
         fb.var_screen_info.xres as i32,
         fb.var_screen_info.yres as i32,
     );
+
+    let mut ui = ui::UI::new();
 
     let menu = Menu::new(vec![
         MenuItem::menu(
@@ -46,38 +53,26 @@ fn ui_loop(rx: mpsc::Receiver<ui::Input>, mut fb: Framebuffer) {
             vec![
                 MenuItem::item(
                     "SUB ITEM 1-1",
-                    || { println!("1-1"); },
+                    ui::Action::Push(ScreenId::TestParam as u32),
                 ),
-                MenuItem::item(
-                    "SUB ITEM 1-2",
-                    || { println!("1-2"); },
-                )
+                MenuItem::menu("SUB ITEM 1-2", vec![])
             ]
         ),
-        MenuItem::menu(
-            "ITEM 2",
-            vec![
-                MenuItem::item(
-                    "SUB ITEM 2-1",
-                    || { println!("2-1"); },
-                ),
-                MenuItem::item(
-                    "SUB ITEM 2-2",
-                    || { println!("2-2"); },
-                )
-            ]
-        ),
+        MenuItem::menu("ITEM 2", vec![]),
     ]);
+    ui.register(ScreenId::MainMenu as u32, Box::new(menu));
 
-    let mut ui = ui::UI::new();
-    ui.push_screen(menu);
+    let param = Param::new("testing".to_string());
+    ui.register(ScreenId::TestParam as u32, Box::new(param));
+
+    ui.push_screen(ScreenId::MainMenu as u32);
 
     loop {
         ui.render(&mut target);
         paint(&target, &mut fb);
 
-        let message = rx.recv().unwrap();
-        ui.handle(message);
+        let input = rx.recv().unwrap();
+        ui.handle(input);
     }
 }
 
