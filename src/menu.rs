@@ -1,3 +1,4 @@
+use crate::ui;
 use font_kit::font::Font;
 use raqote;
 use std::sync::Arc;
@@ -71,7 +72,7 @@ impl Menu {
         }
     }
 
-    fn active_items(self: &Self) -> &Vec<MenuItem> {
+    fn active_items(&self) -> &Vec<MenuItem> {
         let mut items = &self.items;
 
         for i in &self.path {
@@ -81,7 +82,37 @@ impl Menu {
         items
     }
 
-    pub fn render(self: &Self, target: &mut raqote::DrawTarget) {
+    pub fn down(&mut self) {
+        if self.selected < (self.active_items().len() - 1) {
+            self.selected += 1;
+        }
+    }
+
+    pub fn up(&mut self) {
+        if self.selected > 0 {
+            self.selected -= 1;
+        }
+    }
+
+    pub fn select(&mut self) {
+        let item = &self.active_items()[self.selected];
+
+        if item.back {
+            self.selected = self.path.pop().unwrap();
+        } else if item.children.len() > 0 {
+            self.path.push(self.selected);
+            self.selected = 0;
+        } else {
+            match item.callback {
+                Some(f) => { f() },
+                None => {}
+            }
+        }
+    }
+}
+
+impl ui::Screen for Menu {
+    fn render(&self, target: &mut raqote::DrawTarget) {
         target.clear(BACKGROUND);
 
         let draw_options = raqote::DrawOptions::new();
@@ -115,31 +146,11 @@ impl Menu {
         }
     }
 
-    pub fn down(self: &mut Self) {
-        if self.selected < (self.active_items().len() - 1) {
-            self.selected += 1;
-        }
-    }
-
-    pub fn up(self: &mut Self) {
-        if self.selected > 0 {
-            self.selected -= 1;
-        }
-    }
-
-    pub fn select(self: &mut Self) {
-        let item = &self.active_items()[self.selected];
-
-        if item.back {
-            self.selected = self.path.pop().unwrap();
-        } else if item.children.len() > 0 {
-            self.path.push(self.selected);
-            self.selected = 0;
-        } else {
-            match item.callback {
-                Some(f) => { f() },
-                None => {}
-            }
+    fn handle(&mut self, input: ui::Input) {
+        match input {
+            ui::Input::Left => { self.up() },
+            ui::Input::Right => { self.down() },
+            ui::Input::Press => { self.select() },
         }
     }
 }

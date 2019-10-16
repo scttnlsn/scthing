@@ -1,6 +1,7 @@
 mod framebuffer;
 mod input;
 mod menu;
+mod ui;
 
 use framebuffer::Framebuffer;
 use input::InputDevice;
@@ -8,12 +9,6 @@ use menu::{Menu, MenuItem};
 use raqote;
 use std::sync::mpsc;
 use std::thread;
-
-enum Message {
-    Right,
-    Left,
-    Press,
-}
 
 const FB_DEVICE: &str = "/dev/fb1";
 const ENC_DEVICE: &str = "/dev/input/by-path/platform-rotary@11-event";
@@ -24,27 +19,28 @@ fn paint(target: &raqote::DrawTarget, fb: &mut Framebuffer) {
 
     let xres = fb.var_screen_info.xres;
     let yres = fb.var_screen_info.yres;
+    let byte_depth = (fb.var_screen_info.bits_per_pixel / 8) as usize;
 
     for x in 0..xres {
         for y in 0..yres {
             let index = (y * xres + x) as usize;
 
             if pixel_data[index] > 0 {
-                fb.frame[index * 2] = 1;
+                fb.frame[index * byte_depth] = 1;
             } else {
-                fb.frame[index * 2] = 0;
+                fb.frame[index * byte_depth] = 0;
             }
         }
     }
 }
 
-fn ui_loop(rx: mpsc::Receiver<Message>, mut fb: Framebuffer) {
-    let xres = fb.var_screen_info.xres as i32;
-    let yres = fb.var_screen_info.yres as i32;
+fn ui_loop(rx: mpsc::Receiver<ui::Input>, mut fb: Framebuffer) {
+    let mut target = raqote::DrawTarget::new(
+        fb.var_screen_info.xres as i32,
+        fb.var_screen_info.yres as i32,
+    );
 
-    let mut target = raqote::DrawTarget::new(xres, yres);
-
-    let mut menu = Menu::new(vec![
+    let menu = Menu::new(vec![
         MenuItem::menu(
             "ITEM 1",
             vec![
@@ -73,28 +69,28 @@ fn ui_loop(rx: mpsc::Receiver<Message>, mut fb: Framebuffer) {
         ),
     ]);
 
-    loop {
-        menu.render(&mut target);
-        paint(&mut target, &mut fb);
+    let mut ui = ui::UI::new();
+    ui.push_screen(menu);
 
-        match rx.recv().unwrap() {
-            Message::Left => { menu.up() },
-            Message::Right => { menu.down() },
-            Message::Press => { menu.select() },
-        }
+    loop {
+        ui.render(&mut target);
+        paint(&target, &mut fb);
+
+        let message = rx.recv().unwrap();
+        ui.handle(message);
     }
 }
 
-fn enc_loop(tx: mpsc::Sender<Message>) {
+fn enc_loop(tx: mpsc::Sender<ui::Input>) {
     match InputDevice::open(ENC_DEVICE) {
         Ok(mut device) => {
             loop {
                 let event = device.read_event().unwrap();
 
                 if event.value == 1 {
-                    tx.send(Message::Right).unwrap();
+                    tx.send(ui::Input::Right).unwrap();
                 } else if event.value == -1 {
-                    tx.send(Message::Left).unwrap();
+                    tx.send(ui::Input::Left).unwrap();
                 }
             }
         },
@@ -105,14 +101,14 @@ fn enc_loop(tx: mpsc::Sender<Message>) {
     }
 }
 
-fn button_loop(tx: mpsc::Sender<Message>) {
+fn button_loop(tx: mpsc::Sender<ui::Input>) {
     match InputDevice::open(BUTTON_DEVICE) {
         Ok(mut device) => {
             loop {
                 let event = device.read_event().unwrap();
 
                 if event.value == 1 {
-                    tx.send(Message::Press).unwrap();
+                    tx.send(ui::Input::Press).unwrap();
                 }
             }
         },
