@@ -28,8 +28,9 @@ pub enum Action {
 pub trait Screen {
     fn render(&self, target: &mut raqote::DrawTarget);
     fn handle(&mut self, input: Input) -> Option<Action>;
-    fn load(&mut self);
-    fn unload(&mut self);
+
+    fn load(&mut self) {}
+    fn unload(&mut self) {}
 }
 
 type ScreenT = Box<dyn Screen>;

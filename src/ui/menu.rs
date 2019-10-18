@@ -130,10 +130,4 @@ impl ui::Screen for Menu {
             },
         }
     }
-
-    fn load(&mut self) {
-    }
-
-    fn unload(&mut self) {
-    }
 }

@@ -60,10 +60,4 @@ impl ui::Screen for Param {
             },
         }
     }
-
-    fn load(&mut self) {
-    }
-
-    fn unload(&mut self) {
-    }
 }
