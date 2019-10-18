@@ -1,5 +1,6 @@
 mod framebuffer;
 mod input;
+mod osc;
 mod ui;
 
 use crate::framebuffer::Framebuffer;

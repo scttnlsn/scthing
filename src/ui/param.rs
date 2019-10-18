@@ -1,27 +1,12 @@
+use crate::osc;
 use crate::ui;
 use raqote;
-use rosc::{OscPacket,OscMessage,OscType};
-use rosc::encoder;
-use std::net::{UdpSocket};
 
 #[derive(Debug)]
 pub struct Param {
     pub name: String,
     pub value: f32,
     pub step: f32
-}
-
-fn osc_send(name: &str, args: Option<Vec<OscType>>) {
-    let packet = OscPacket::Message(
-        OscMessage {
-            addr: name.to_string(),
-            args: args,
-        }
-    );
-
-    let bytes = encoder::encode(&packet).unwrap();
-    let socket = UdpSocket::bind("127.0.0.1:56874").unwrap();
-    socket.send_to(&bytes, "127.0.0.1:57120").unwrap();
 }
 
 impl Param {
@@ -42,9 +27,9 @@ impl Param {
     }
 
     pub fn send(&self) {
-        osc_send("set", Some(vec![
-            OscType::String(self.name.clone()),
-            OscType::Float(self.value),
+        osc::send("set", Some(vec![
+            osc::Type::String(self.name.clone()),
+            osc::Type::Float(self.value),
         ]));
     }
 }
