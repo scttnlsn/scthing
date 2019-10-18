@@ -1,5 +1,6 @@
 pub mod menu;
 pub mod param;
+pub mod patch;
 
 use font_kit::font::Font;
 use raqote;
@@ -27,6 +28,8 @@ pub enum Action {
 pub trait Screen {
     fn render(&self, target: &mut raqote::DrawTarget);
     fn handle(&mut self, input: Input) -> Option<Action>;
+    fn load(&mut self);
+    fn unload(&mut self);
 }
 
 type ScreenT = Box<dyn Screen>;
@@ -80,8 +83,16 @@ impl UI {
             match action {
                 Action::Push(screen_id) => {
                     self.push_screen(screen_id);
+
+                    if let Some(screen) = self.current_screen() {
+                        screen.load();
+                    }
                 },
                 Action::Pop => {
+                    if let Some(screen) = self.current_screen() {
+                        screen.unload();
+                    }
+
                     self.pop_screen();
                 },
             }

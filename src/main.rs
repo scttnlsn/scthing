@@ -5,6 +5,7 @@ mod ui;
 use crate::framebuffer::Framebuffer;
 use crate::input::InputDevice;
 use crate::ui::menu::{Menu, MenuItem};
+use crate::ui::patch::Patch;
 use crate::ui::param::Param;
 use raqote;
 use std::sync::mpsc;
@@ -36,7 +37,11 @@ fn paint(target: &raqote::DrawTarget, fb: &mut Framebuffer) {
 
 enum ScreenId {
     MainMenu,
-    TestParam,
+    TonePatch,
+    TremPatch,
+    FreqParam,
+    SpeedParam,
+    DepthParam,
 }
 
 fn ui_loop(rx: mpsc::Receiver<ui::Input>, mut fb: Framebuffer) {
@@ -49,21 +54,51 @@ fn ui_loop(rx: mpsc::Receiver<ui::Input>, mut fb: Framebuffer) {
 
     let menu = Menu::new(vec![
         MenuItem::menu(
-            "ITEM 1",
+            "TESTING".to_string(),
             vec![
                 MenuItem::item(
-                    "SUB ITEM 1-1",
-                    ui::Action::Push(ScreenId::TestParam as u32),
+                    "TONE".to_string(),
+                    ui::Action::Push(ScreenId::TonePatch as u32),
                 ),
-                MenuItem::menu("SUB ITEM 1-2", vec![])
             ]
         ),
-        MenuItem::menu("ITEM 2", vec![]),
+        MenuItem::menu(
+            "EFFECTS".to_string(),
+            vec![
+                MenuItem::item(
+                    "TREMOLO".to_string(),
+                    ui::Action::Push(ScreenId::TremPatch as u32),
+                ),
+            ]
+        ),
     ]);
     ui.register(ScreenId::MainMenu as u32, Box::new(menu));
 
-    let param = Param::new("testing".to_string());
-    ui.register(ScreenId::TestParam as u32, Box::new(param));
+    let tone_param = Param::new("freq".to_string(), 440.0, 10.0);
+    ui.register(ScreenId::FreqParam as u32, Box::new(tone_param));
+
+    let tone = Patch::new("tone".to_string(), Menu::new(
+        vec![
+            MenuItem::item("freq".to_string(), ui::Action::Push(ScreenId::FreqParam as u32)),
+            MenuItem::item("<-".to_string(), ui::Action::Pop),
+        ]
+    ));
+    ui.register(ScreenId::TonePatch as u32, Box::new(tone));
+
+    let speed_param = Param::new("speed".to_string(), 2.0, 0.2);
+    ui.register(ScreenId::SpeedParam as u32, Box::new(speed_param));
+
+    let depth_param = Param::new("depth".to_string(), 0.5, 0.1);
+    ui.register(ScreenId::DepthParam as u32, Box::new(depth_param));
+
+    let trem = Patch::new("trem".to_string(), Menu::new(
+        vec![
+            MenuItem::item("speed".to_string(), ui::Action::Push(ScreenId::SpeedParam as u32)),
+            MenuItem::item("depth".to_string(), ui::Action::Push(ScreenId::DepthParam as u32)),
+            MenuItem::item("<-".to_string(), ui::Action::Pop),
+        ]
+    ));
+    ui.register(ScreenId::TremPatch as u32, Box::new(trem));
 
     ui.push_screen(ScreenId::MainMenu as u32);
 

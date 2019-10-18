@@ -1,15 +1,16 @@
 use crate::ui;
 use raqote;
 
+#[derive(Debug)]
 pub struct MenuItem {
-    label: &'static str,
+    label: String,
     children: Vec<MenuItem>,
     back: bool,
     action: Option<ui::Action>,
 }
 
 impl MenuItem {
-    pub fn menu(label: &'static str, children: Vec<MenuItem>) -> Self {
+    pub fn menu(label: String, children: Vec<MenuItem>) -> Self {
         MenuItem {
             label: label,
             children: children,
@@ -18,7 +19,7 @@ impl MenuItem {
         }
     }
 
-    pub fn item(label: &'static str, action: ui::Action) -> Self {
+    pub fn item(label: String, action: ui::Action) -> Self {
         MenuItem {
             label: label,
             children: vec![],
@@ -34,7 +35,7 @@ impl MenuItem {
             }
 
             self.children.push(MenuItem {
-                label: "<-",
+                label: "<-".to_string(),
                 children: vec![],
                 back: true,
                 action: None,
@@ -43,6 +44,7 @@ impl MenuItem {
     }
 }
 
+#[derive(Debug)]
 pub struct Menu {
     path: Vec<usize>,
     selected: usize,
@@ -127,5 +129,11 @@ impl ui::Screen for Menu {
                 self.select()
             },
         }
+    }
+
+    fn load(&mut self) {
+    }
+
+    fn unload(&mut self) {
     }
 }
