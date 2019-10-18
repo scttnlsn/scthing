@@ -38,6 +38,7 @@ type ScreenT = Box<dyn Screen>;
 pub struct UI {
     screens: HashMap<u32, ScreenT>,
     stack: Vec<u32>,
+    next_id: u32,
 }
 
 impl UI {
@@ -45,11 +46,15 @@ impl UI {
         UI {
             screens: HashMap::new(),
             stack: vec![],
+            next_id: 0,
         }
     }
 
-    pub fn register(&mut self, screen_id: u32, screen: ScreenT) {
-        self.screens.insert(screen_id, screen);
+    pub fn register(&mut self, screen: ScreenT) -> u32 {
+        let screen_id = self.next_id;
+        self.screens.insert(self.next_id, screen);
+        self.next_id += 1;
+        screen_id
     }
 
     pub fn current_screen(&mut self) -> Option<&mut ScreenT> {

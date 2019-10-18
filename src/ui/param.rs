@@ -12,9 +12,9 @@ pub struct Param {
 }
 
 impl Param {
-    pub fn new(name: String, value: f32, step: f32, min: f32, max: f32) -> Self {
+    pub fn new(name: &str, value: f32, step: f32, min: f32, max: f32) -> Self {
         Param {
-            name: name,
+            name: name.to_string(),
             value: value,
             step: step,
             min: min,

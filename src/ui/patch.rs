@@ -9,9 +9,9 @@ pub struct Patch {
 }
 
 impl Patch {
-    pub fn new(name: String, menu: ui::menu::Menu) -> Self {
+    pub fn new(name: &str, menu: ui::menu::Menu) -> Self {
         Patch {
-            name: name,
+            name: name.to_string(),
             menu: menu,
         }
     }

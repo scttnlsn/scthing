@@ -1,45 +1,17 @@
 use crate::ui;
 use raqote;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct MenuItem {
-    label: String,
-    children: Vec<MenuItem>,
-    back: bool,
+    label: &'static str,
     action: Option<ui::Action>,
 }
 
 impl MenuItem {
-    pub fn menu(label: String, children: Vec<MenuItem>) -> Self {
+    pub fn new(label: &'static str, action: ui::Action) -> Self {
         MenuItem {
             label: label,
-            children: children,
-            back: false,
-            action: None,
-        }
-    }
-
-    pub fn item(label: String, action: ui::Action) -> Self {
-        MenuItem {
-            label: label,
-            children: vec![],
-            back: false,
             action: Some(action),
-        }
-    }
-
-    fn insert_back_button(self: &mut Self) {
-        if self.children.len() > 0 {
-            for child in &mut self.children {
-                child.insert_back_button();
-            }
-
-            self.children.push(MenuItem {
-                label: "<-".to_string(),
-                children: vec![],
-                back: true,
-                action: None,
-            })
         }
     }
 }
@@ -52,11 +24,7 @@ pub struct Menu {
 }
 
 impl Menu {
-    pub fn new(mut menu_items: Vec<MenuItem>) -> Self {
-        for item in &mut menu_items {
-            item.insert_back_button()
-        }
-
+    pub fn new(menu_items: Vec<MenuItem>) -> Self {
         Menu {
             path: vec![],
             selected: 0,
@@ -64,18 +32,8 @@ impl Menu {
         }
     }
 
-    fn active_items(&self) -> &Vec<MenuItem> {
-        let mut items = &self.items;
-
-        for i in &self.path {
-            items = &items[*i as usize].children;
-        }
-
-        items
-    }
-
     pub fn down(&mut self) {
-        if self.selected < (self.active_items().len() - 1) {
+        if self.selected < (self.items.len() - 1) {
             self.selected += 1;
         }
     }
@@ -87,24 +45,14 @@ impl Menu {
     }
 
     pub fn select(&mut self) -> Option<ui::Action> {
-        let item = &self.active_items()[self.selected];
-
-        if item.back {
-            self.selected = self.path.pop().unwrap();
-            None
-        } else if item.children.len() > 0 {
-            self.path.push(self.selected);
-            self.selected = 0;
-            None
-        } else {
-            item.action
-        }
+        let item = &self.items[self.selected];
+        item.action
     }
 }
 
 impl ui::Screen for Menu {
     fn render(&self, target: &mut raqote::DrawTarget) {
-        let lines = self.active_items().iter().enumerate().map(|(i, item)| {
+        let lines = self.items.iter().enumerate().map(|(i, item)| {
             if self.selected == i {
                 format!("* {}", item.label)
             } else {
