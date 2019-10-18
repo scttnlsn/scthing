@@ -75,7 +75,7 @@ fn ui_loop(rx: mpsc::Receiver<ui::Input>, mut fb: Framebuffer) {
     ]);
     ui.register(ScreenId::MainMenu as u32, Box::new(menu));
 
-    let tone_param = Param::new("freq".to_string(), 440.0, 10.0);
+    let tone_param = Param::new("freq".to_string(), 440.0, 10.0, 20.0, 20000.0);
     ui.register(ScreenId::FreqParam as u32, Box::new(tone_param));
 
     let tone = Patch::new("tone".to_string(), Menu::new(
@@ -86,10 +86,10 @@ fn ui_loop(rx: mpsc::Receiver<ui::Input>, mut fb: Framebuffer) {
     ));
     ui.register(ScreenId::TonePatch as u32, Box::new(tone));
 
-    let speed_param = Param::new("speed".to_string(), 2.0, 0.2);
+    let speed_param = Param::new("speed".to_string(), 2.0, 0.2, 0.1, 10.0);
     ui.register(ScreenId::SpeedParam as u32, Box::new(speed_param));
 
-    let depth_param = Param::new("depth".to_string(), 0.5, 0.1);
+    let depth_param = Param::new("depth".to_string(), 0.5, 0.1, 0.0, 1.0);
     ui.register(ScreenId::DepthParam as u32, Box::new(depth_param));
 
     let trem = Patch::new("trem".to_string(), Menu::new(
@@ -117,7 +117,6 @@ fn enc_loop(tx: mpsc::Sender<ui::Input>) {
         Ok(mut device) => {
             loop {
                 let event = device.read_event().unwrap();
-
                 if event.value == 1 {
                     tx.send(ui::Input::Right).unwrap();
                 } else if event.value == -1 {

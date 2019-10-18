@@ -6,24 +6,38 @@ use raqote;
 pub struct Param {
     pub name: String,
     pub value: f32,
-    pub step: f32
+    pub step: f32,
+    pub min: f32,
+    pub max: f32,
 }
 
 impl Param {
-    pub fn new(name: String, value: f32, step: f32) -> Self {
+    pub fn new(name: String, value: f32, step: f32, min: f32, max: f32) -> Self {
         Param {
             name: name,
             value: value,
             step: step,
+            min: min,
+            max: max,
         }
     }
 
     pub fn inc(&mut self) {
         self.value += self.step;
+        if self.value > self.max {
+            self.value = self.max;
+        }
     }
 
     pub fn dec(&mut self) {
         self.value -= self.step;
+        if self.value < self.min {
+            self.value = self.min;
+        }
+    }
+
+    pub fn perc(&self) -> f32 {
+        self.value / self.max
     }
 
     pub fn send(&self) {
@@ -36,9 +50,14 @@ impl Param {
 
 impl ui::Screen for Param {
     fn render(&self, target: &mut raqote::DrawTarget) {
-        let lines = vec![
-            format!("{} = {:?}", self.name, self.value)
+        let mut lines = vec![
+            format!("{}:", self.name),
+            format!("{:.*}", 2, self.value),
         ];
+
+        let max_width = 13.0; // max chars wide
+        let val_width = (max_width * self.perc()).round() as usize;
+        lines.push(vec!["-"; val_width].join(""));
 
         ui::render_lines(lines, target);
     }
