@@ -13,6 +13,8 @@ const BACKGROUND: raqote::SolidSource = raqote::SolidSource { r: 0x00, g: 0x00, 
 const FOREGROUND: raqote::SolidSource = raqote::SolidSource { r: 0xFF, g: 0xFF, b: 0xFF, a: 0xFF };
 const FOREGROUND_SOURCE: raqote::Source = raqote::Source::Solid(FOREGROUND);
 
+pub type ScreenId = u32;
+
 pub enum Input {
     Right,
     Left,
@@ -21,7 +23,7 @@ pub enum Input {
 
 #[derive(Debug, Copy, Clone)]
 pub enum Action {
-    Push(u32),
+    Push(ScreenId),
     Pop,
 }
 
@@ -36,9 +38,9 @@ pub trait Screen {
 type ScreenT = Box<dyn Screen>;
 
 pub struct UI {
-    screens: HashMap<u32, ScreenT>,
-    stack: Vec<u32>,
-    next_id: u32,
+    screens: HashMap<ScreenId, ScreenT>,
+    stack: Vec<ScreenId>,
+    next_id: ScreenId,
 }
 
 impl UI {
@@ -50,7 +52,7 @@ impl UI {
         }
     }
 
-    pub fn register<T: 'static + Screen>(&mut self, screen: T) -> u32 {
+    pub fn register<T: 'static + Screen>(&mut self, screen: T) -> ScreenId {
         let screen_id = self.next_id;
         self.screens.insert(self.next_id, Box::new(screen));
         self.next_id += 1;
@@ -62,7 +64,7 @@ impl UI {
         self.screens.get_mut(id)
     }
 
-    pub fn push_screen(&mut self, screen_id: u32) {
+    pub fn push_screen(&mut self, screen_id: ScreenId) {
         self.stack.push(screen_id);
     }
 
