@@ -50,9 +50,9 @@ impl UI {
         }
     }
 
-    pub fn register(&mut self, screen: ScreenT) -> u32 {
+    pub fn register<T: 'static + Screen>(&mut self, screen: T) -> u32 {
         let screen_id = self.next_id;
-        self.screens.insert(self.next_id, screen);
+        self.screens.insert(self.next_id, Box::new(screen));
         self.next_id += 1;
         screen_id
     }

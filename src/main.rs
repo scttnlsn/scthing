@@ -46,40 +46,40 @@ fn ui_loop(rx: mpsc::Receiver<ui::Input>, mut fb: Framebuffer) {
 
     let back = MenuItem::new("<-", ui::Action::Pop);
 
-    let freq_param = ui.register(Box::new(
+    let freq_param = ui.register(
         Param::new("freq", 440.0, 10.0, 20.0, 20000.0)
-    ));
+    );
 
-    let tone_patch = ui.register(Box::new(Patch::new("tone", Menu::new(vec![
+    let tone_patch = ui.register(Patch::new("tone", Menu::new(vec![
         MenuItem::new("freq", ui::Action::Push(freq_param)),
         back.clone(),
-    ]))));
+    ])));
 
-    let speed_param = ui.register(Box::new(Param::new("speed", 2.0, 0.2, 0.1, 10.0)));
-    let depth_param = ui.register(Box::new(Param::new("depth", 0.5, 0.1, 0.0, 1.0)));
+    let speed_param = ui.register(Param::new("speed", 2.0, 0.2, 0.1, 10.0));
+    let depth_param = ui.register(Param::new("depth", 0.5, 0.1, 0.0, 1.0));
 
-    let trem_patch = ui.register(Box::new(Patch::new("trem", Menu::new(
+    let trem_patch = ui.register(Patch::new("trem", Menu::new(
         vec![
             MenuItem::new("speed", ui::Action::Push(speed_param)),
             MenuItem::new("depth", ui::Action::Push(depth_param)),
             back.clone(),
         ]
-    ))));
+    )));
 
-    let testing_menu = ui.register(Box::new(Menu::new(vec![
+    let testing_menu = ui.register(Menu::new(vec![
         MenuItem::new("tone", ui::Action::Push(tone_patch)),
         back.clone(),
-    ])));
+    ]));
 
-    let effects_menu = ui.register(Box::new(Menu::new(vec![
+    let effects_menu = ui.register(Menu::new(vec![
         MenuItem::new("tremolo", ui::Action::Push(trem_patch)),
         back.clone(),
-    ])));
+    ]));
 
-    let root_menu = ui.register(Box::new(Menu::new(vec![
+    let root_menu = ui.register(Menu::new(vec![
         MenuItem::new("effects", ui::Action::Push(effects_menu)),
         MenuItem::new("testing", ui::Action::Push(testing_menu)),
-    ])));
+    ]));
 
     ui.push_screen(root_menu);
 
