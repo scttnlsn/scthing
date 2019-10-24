@@ -9,6 +9,7 @@ mod ui;
 use crate::framebuffer::Framebuffer;
 use crate::input::InputDevice;
 use crate::ui::build_ui;
+use clap::{Arg, App};
 use raqote;
 use std::sync::mpsc;
 use std::thread;
@@ -95,7 +96,18 @@ fn button_loop(tx: mpsc::Sender<ui::Input>, device: String) {
 }
 
 fn main() {
-    let conf = config::parse("./config.toml").unwrap();
+    let matches = App::new("")
+        .version("0.1.0")
+        .arg(Arg::with_name("config")
+             .short("c")
+             .long("config")
+             .value_name("FILE")
+             .help("config file path")
+             .takes_value(true)
+             .required(true))
+        .get_matches();
+
+    let conf = config::parse(matches.value_of("config").unwrap()).unwrap();
 
     let (tx, rx) = mpsc::channel();
 
