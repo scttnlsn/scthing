@@ -2,8 +2,13 @@ pub mod menu;
 pub mod param;
 pub mod patch;
 
+use crate::config;
+use crate::ui::menu::{Menu, MenuItem};
+use crate::ui::param::Param;
+use crate::ui::patch::Patch;
 use font_kit::font::Font;
 use raqote;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -134,4 +139,58 @@ fn render_lines(lines: Vec<String>, target: &mut raqote::DrawTarget) {
         let point = raqote::Point::new(0.0, (line_height * (i + 1) as f32) + offset);
         draw_text(&line, point);
     }
+}
+
+fn build_param(param_config: &config::Param) -> Param {
+    Param::new(
+        &param_config.name,
+        param_config.value,
+        param_config.step,
+        param_config.min,
+        param_config.max,
+    )
+}
+
+fn build_patch(shared_ui: &RefCell<UI>, patch_config: &config::Patch) -> Patch {
+    let mut items = patch_config.params.iter().map(|param_config| {
+        let param = build_param(&param_config);
+        let param_id = shared_ui.borrow_mut().register(param);
+        MenuItem::new(&param_config.name, Action::Push(param_id))
+    }).collect::<Vec<MenuItem>>();
+
+    items.push(MenuItem::new("<-", Action::Pop));
+
+    Patch::new(&patch_config.name, Menu::new(items))
+}
+
+fn build_menu(shared_ui: &RefCell<UI>, menu_config: &config::Menu) -> Menu {
+    let mut items = menu_config.patches.iter().map(|patch_config| {
+        let patch = build_patch(shared_ui, &patch_config);
+        let patch_id = shared_ui.borrow_mut().register(patch);
+        MenuItem::new(&patch_config.name, Action::Push(patch_id))
+    }).collect::<Vec<MenuItem>>();
+
+    items.push(MenuItem::new("<-", Action::Pop));
+
+    Menu::new(items)
+}
+
+pub fn build_ui(menus: &Vec<config::Menu>) -> UI {
+    let shared_ui: RefCell<UI> = RefCell::new(UI::new());
+
+    {
+        let items = menus.iter().map(|menu| {
+            let x = build_menu(&shared_ui, &menu);
+            let mut ui = shared_ui.borrow_mut();
+            let menu_id = ui.register(x);
+            MenuItem::new(&menu.name, Action::Push(menu_id))
+        }).collect::<Vec<MenuItem>>();
+
+        let mut ui = shared_ui.borrow_mut();
+        let root_menu = ui.register(Menu::new(items));
+        ui.push_screen(root_menu);
+
+    }
+
+    shared_ui.into_inner()
 }

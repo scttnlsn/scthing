@@ -1,3 +1,6 @@
+#[macro_use] extern crate failure;
+
+mod config;
 mod framebuffer;
 mod input;
 mod osc;
@@ -5,16 +8,10 @@ mod ui;
 
 use crate::framebuffer::Framebuffer;
 use crate::input::InputDevice;
-use crate::ui::menu::{Menu, MenuItem};
-use crate::ui::patch::Patch;
-use crate::ui::param::Param;
+use crate::ui::build_ui;
 use raqote;
 use std::sync::mpsc;
 use std::thread;
-
-const FB_DEVICE: &str = "/dev/fb1";
-const ENC_DEVICE: &str = "/dev/input/by-path/platform-rotary@11-event";
-const BUTTON_DEVICE: &str = "/dev/input/by-path/platform-button@16-event";
 
 fn paint(target: &raqote::DrawTarget, fb: &mut Framebuffer) {
     let pixel_data = target.get_data();
@@ -36,60 +33,32 @@ fn paint(target: &raqote::DrawTarget, fb: &mut Framebuffer) {
     }
 }
 
-fn ui_loop(rx: mpsc::Receiver<ui::Input>, mut fb: Framebuffer) {
-    let mut target = raqote::DrawTarget::new(
-        fb.var_screen_info.xres as i32,
-        fb.var_screen_info.yres as i32,
-    );
+fn ui_loop(rx: mpsc::Receiver<ui::Input>, fb_device: String, menus: Vec<config::Menu>) {
+    match Framebuffer::new(fb_device) {
+        Ok(mut fb) => {
+            let mut ui = build_ui(&menus);
+            let mut target = raqote::DrawTarget::new(
+                fb.var_screen_info.xres as i32,
+                fb.var_screen_info.yres as i32,
+            );
 
-    let mut ui = ui::UI::new();
+            loop {
+                ui.render(&mut target);
+                paint(&target, &mut fb);
 
-    let back = MenuItem::new("<-", ui::Action::Pop);
-
-    let freq_param = ui.register(Param::new("freq", 440.0, 10.0, 20.0, 20000.0));
-
-    let tone_patch = ui.register(Patch::new("tone", Menu::new(vec![
-        MenuItem::new("freq", ui::Action::Push(freq_param)),
-        back.clone(),
-    ])));
-
-    let speed_param = ui.register(Param::new("speed", 2.0, 0.2, 0.1, 10.0));
-    let depth_param = ui.register(Param::new("depth", 0.5, 0.1, 0.0, 1.0));
-
-    let trem_patch = ui.register(Patch::new("trem", Menu::new(vec![
-        MenuItem::new("speed", ui::Action::Push(speed_param)),
-        MenuItem::new("depth", ui::Action::Push(depth_param)),
-        back.clone(),
-    ])));
-
-    let testing_menu = ui.register(Menu::new(vec![
-        MenuItem::new("tone", ui::Action::Push(tone_patch)),
-        back.clone(),
-    ]));
-
-    let effects_menu = ui.register(Menu::new(vec![
-        MenuItem::new("tremolo", ui::Action::Push(trem_patch)),
-        back.clone(),
-    ]));
-
-    let root_menu = ui.register(Menu::new(vec![
-        MenuItem::new("effects", ui::Action::Push(effects_menu)),
-        MenuItem::new("testing", ui::Action::Push(testing_menu)),
-    ]));
-
-    ui.push_screen(root_menu);
-
-    loop {
-        ui.render(&mut target);
-        paint(&target, &mut fb);
-
-        let input = rx.recv().unwrap();
-        ui.handle(input);
+                let input = rx.recv().unwrap();
+                ui.handle(input);
+            }
+        },
+        Err(_) => {
+            println!("error opening framebuffer device");
+            return;
+        }
     }
 }
 
-fn enc_loop(tx: mpsc::Sender<ui::Input>) {
-    match InputDevice::open(ENC_DEVICE) {
+fn enc_loop(tx: mpsc::Sender<ui::Input>, device: String) {
+    match InputDevice::open(device) {
         Ok(mut device) => {
             loop {
                 let event = device.read_event().unwrap();
@@ -107,8 +76,8 @@ fn enc_loop(tx: mpsc::Sender<ui::Input>) {
     }
 }
 
-fn button_loop(tx: mpsc::Sender<ui::Input>) {
-    match InputDevice::open(BUTTON_DEVICE) {
+fn button_loop(tx: mpsc::Sender<ui::Input>, device: String) {
+    match InputDevice::open(device) {
         Ok(mut device) => {
             loop {
                 let event = device.read_event().unwrap();
@@ -126,27 +95,26 @@ fn button_loop(tx: mpsc::Sender<ui::Input>) {
 }
 
 fn main() {
-    let fb = Framebuffer::new(FB_DEVICE).unwrap();
-
-    let xres = fb.var_screen_info.xres;
-    let yres = fb.var_screen_info.yres;
-    let byte_depth = fb.var_screen_info.bits_per_pixel / 8;
-    println!("screen info: {}x{} ({} bpp)", xres, yres, byte_depth);
+    let conf = config::parse("./config.toml").unwrap();
 
     let (tx, rx) = mpsc::channel();
 
+    let fb_device = conf.devices.framebuffer;
+    let menus = conf.menus;
     let ui_thread = thread::spawn(move || {
-        ui_loop(rx, fb);
+        ui_loop(rx, fb_device, menus);
     });
 
+    let enc_device = conf.devices.encoder;
     let enc_tx = tx.clone();
     let enc_thread = thread::spawn(move || {
-        enc_loop(enc_tx);
+        enc_loop(enc_tx, enc_device);
     });
 
+    let button_device = conf.devices.button;
     let button_tx = tx.clone();
     let button_thread = thread::spawn(move || {
-        button_loop(button_tx);
+        button_loop(button_tx, button_device);
     });
 
     ui_thread.join().unwrap();

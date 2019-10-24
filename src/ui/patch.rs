@@ -17,11 +17,19 @@ impl Patch {
     }
 
     pub fn start(&self) {
-        osc::send("start", Some(vec![osc::Type::String(self.name.clone())]));
+        let res = osc::send("start", Some(vec![osc::Type::String(self.name.clone())]));
+
+        if let Err(err) = res {
+            println!("error sending OSC message: {}", err);
+        }
     }
 
     pub fn stop(&self) {
-        osc::send("stop", None);
+        let res = osc::send("stop", None);
+
+        if let Err(err) = res {
+            println!("error sending OSC message: {}", err);
+        }
     }
 }
 

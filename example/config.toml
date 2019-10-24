@@ -1,0 +1,37 @@
+[devices]
+    framebuffer = "/dev/fb1"
+    encoder = "/dev/input/by-path/platform-rotary@11-event"
+    button = "/dev/input/by-path/platform-button@16-event"
+
+[[menus]]
+name = "effects"
+
+     [[menus.patches]]
+     name = "trem"
+
+          [[menus.patches.params]]
+          name = "speed"
+          value = 2.0
+          step = 0.2
+          min = 0.1
+          max = 10.0
+
+          [[menus.patches.params]]
+          name = "depth"
+          value = 0.5
+          step = 0.1
+          min = 0.0
+          max = 1.0
+
+[[menus]]
+name = "testing"
+
+     [[menus.patches]]
+     name = "tone"
+
+          [[menus.patches.params]]
+          name = "freq"
+          value = 440.0
+          step = 10.0
+          min = 20.0
+          max = 20000.0

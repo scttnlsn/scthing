@@ -1,16 +1,16 @@
 use crate::ui;
 use raqote;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct MenuItem {
-    label: &'static str,
+    label: String,
     action: Option<ui::Action>,
 }
 
 impl MenuItem {
-    pub fn new(label: &'static str, action: ui::Action) -> Self {
+    pub fn new(label: &str, action: ui::Action) -> Self {
         MenuItem {
-            label: label,
+            label: label.to_string(),
             action: Some(action),
         }
     }

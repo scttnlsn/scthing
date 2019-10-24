@@ -41,10 +41,14 @@ impl Param {
     }
 
     pub fn send(&self) {
-        osc::send("set", Some(vec![
+        let res = osc::send("set", Some(vec![
             osc::Type::String(self.name.clone()),
             osc::Type::Float(self.value),
         ]));
+
+        if let Err(err) = res {
+            println!("error sending OSC message: {}", err);
+        }
     }
 }
 
