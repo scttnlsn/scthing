@@ -203,4 +203,22 @@ impl Framebuffer {
             ))
         }
     }
+
+    pub fn draw(&mut self, data: &[u32]) {
+        let xres = self.var_screen_info.xres;
+        let yres = self.var_screen_info.yres;
+        let byte_depth = (self.var_screen_info.bits_per_pixel / 8) as usize;
+
+        for x in 0..xres {
+            for y in 0..yres {
+                let index = (y * xres + x) as usize;
+
+                if data[index] > 0 {
+                    self.frame[index * byte_depth] = 1;
+                } else {
+                    self.frame[index * byte_depth] = 0;
+                }
+            }
+        }
+    }
 }

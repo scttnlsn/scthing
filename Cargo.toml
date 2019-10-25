@@ -1,5 +1,5 @@
 [package]
-name = "noisemaker"
+name = "scthing"
 version = "0.1.0"
 authors = ["Scott Nelson <scott@scottnelson.co>"]
 edition = "2018"
@@ -17,4 +17,5 @@ raqote = "0.7.3"
 rosc = "0.2.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_derive = "1.0"
+state = { version = "0.4.1", features = ["const_fn"] }
 toml = "0.5.3"

@@ -3,6 +3,9 @@
     encoder = "/dev/input/by-path/platform-rotary@11-event"
     button = "/dev/input/by-path/platform-button@16-event"
 
+[osc]
+addr = "127.0.0.1:57120"
+
 [[menus]]
 name = "effects"
 

@@ -1,3 +1,4 @@
+use crate::config;
 use std::io;
 use rand::Rng;
 use rosc::{OscPacket,OscMessage,OscType};
@@ -39,6 +40,7 @@ fn check_port(port: u16) -> bool {
 
 fn random_port() -> u16 {
     let mut rng = rand::thread_rng();
+
     loop {
         let port = rng.gen_range(1024, 65535);
 
@@ -60,7 +62,8 @@ pub fn send(name: &str, args: Option<Vec<OscType>>) -> Result<(), Error> {
     let port = random_port();
     let socket = UdpSocket::bind(("127.0.0.1", port))?;
 
-    socket.send_to(&bytes, "127.0.0.1:57120")?;
+    let conf = &*config::CONFIG.get();
+    socket.send_to(&bytes, &conf.osc.addr)?;
 
     Ok(())
 }

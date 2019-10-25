@@ -1,11 +1,15 @@
 use serde_derive::Deserialize;
+use state;
 use std::fs;
 use std::io;
 use toml;
 
+pub static CONFIG: state::Storage<Config> = state::Storage::new();
+
 #[derive(Deserialize, Debug)]
 pub struct Config {
     pub devices: Devices,
+    pub osc: Osc,
     pub menus: Vec<Menu>,
 }
 
@@ -14,6 +18,11 @@ pub struct Devices {
     pub framebuffer: String,
     pub encoder: String,
     pub button: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Osc {
+    pub addr: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -39,7 +48,6 @@ pub struct Param {
 
 pub fn parse(path: &str) -> Result<Config, io::Error> {
     let config_toml = fs::read_to_string(path)?;
-
     let config: Config = toml::from_str(&config_toml)?;
     Ok(config)
 }

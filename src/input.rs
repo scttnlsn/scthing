@@ -38,7 +38,7 @@ impl InputDevice {
     pub fn read_event(self: &mut Self) -> Result<InputEvent, io::Error> {
         let mut buf: [u8; INPUT_EVENT_SIZE] = [0; INPUT_EVENT_SIZE];
 
-        let bytes = self.file.read(&mut buf).unwrap();
+        let bytes = self.file.read(&mut buf)?;
         if bytes != INPUT_EVENT_SIZE {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
