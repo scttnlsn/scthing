@@ -169,7 +169,7 @@ fn build_menu(ui: &mut UI, menu_config: &config::Menu) -> Menu {
         MenuItem::new(&patch_config.name, Action::Push(patch_id))
     }).collect::<Vec<MenuItem>>();
 
-    items.push(MenuItem::new("<-", Action::Pop));
+    items.push(MenuItem::new("↩", Action::Pop));
 
     Menu::new(items)
 }

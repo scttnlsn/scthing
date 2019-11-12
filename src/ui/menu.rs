@@ -54,7 +54,7 @@ impl ui::Screen for Menu {
     fn render(&self, target: &mut raqote::DrawTarget) {
         let lines = self.items.iter().enumerate().map(|(i, item)| {
             if self.selected == i {
-                format!("* {}", item.label)
+                format!("> {}", item.label)
             } else {
                 format!("  {}", item.label)
             }
