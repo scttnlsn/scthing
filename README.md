@@ -1,6 +1,6 @@
 # scthing
 
-A small, flexible embedded Linux device for running and manipulating SuperCollider patches.  Load and unload synths you define, adjust synth parameters live and configure a visual menu system that fits your workflow.  Your custom menu hierarchy and synth parameters are defined in a [config file](blob/master/example/config.toml) and used to send the appropriate OSC messages to a running SuperCollider server (typically on the same device).
+A small, flexible embedded Linux device for running and manipulating SuperCollider patches.  Load and unload synths you define, adjust synth parameters live and configure a visual menu system that fits your workflow.  Your custom menu hierarchy and synth parameters are defined in a [config file](example/config.toml) and used to send the appropriate OSC messages to a running SuperCollider server (typically on the same device).
 
 ## Hardware
 
@@ -52,7 +52,7 @@ Copy `target/<target>/release/scthing` to the target system.
 
 ## Config
 
-See [example/config.toml](blob/master/example/config.toml) for an example config file.  The `[devices]` and `[osc]` sections are required but the rest is up to you.
+See [example/config.toml](example/config.toml) for an example config file.  The `[devices]` and `[osc]` sections are required but the rest is up to you.
 
 ## OSC Protocol
 
@@ -74,4 +74,4 @@ Set a synth parameter:
 /set <synth name> <arg name> <arg value>
 ```
 
-Your SC patch should respond to these messages accordingly (see [examples/patch.scd](blob/master/example/patch.scd) for an example).
+Your SC patch should respond to these messages accordingly (see [example/patch.scd](example/patch.scd) for an example).
